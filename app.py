@@ -99,7 +99,7 @@ def get_model(case_name):
     checkpoint_paths = {
 
         "Cavity":
-        r"D:\project\checkpoints\cavity_checkpoint.pt",
+        BASE_DIR /"cavity_checkpoint.pt",
 
         "Cylinder":
         "cylinderflow_checkpoint.pt",
@@ -107,7 +107,7 @@ def get_model(case_name):
         "Backward Facing Step":
         "bfs_checkpoint.pt",
 
-        "NACA0012":
+        "NACA0012": 
         "naca_checkpoint.pt"
     }
 
