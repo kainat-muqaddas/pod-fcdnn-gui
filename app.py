@@ -104,7 +104,7 @@ def get_model(case_name):
     checkpoint_paths = {
 
         "Cavity":
-        "cavity_checkpoint.pt",
+        "D:\project\checkpoints\cavity_checkpoint.pt",
 
         "Cylinder":
         "cylinderflow_checkpoint.pt",
