@@ -104,16 +104,16 @@ def get_model(case_name):
     checkpoint_paths = {
 
         "Cavity":
-        "checkpoints/cavity_checkpoint.pt",
+        "cavity_checkpoint.pt",
 
         "Cylinder":
-        "checkpoints/cylinder_checkpoint.pt",
+        "cylinderflow_checkpoint.pt",
 
         "Backward Facing Step":
-        "checkpoints/bfs_checkpoint.pt",
+        "bfs_checkpoint.pt",
 
         "NACA0012":
-        "checkpoints/naca_checkpoint.pt"
+        "naca_checkpoint.pt"
     }
 
     return load_checkpoint(
