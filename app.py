@@ -19,16 +19,9 @@ from plotly.subplots import make_subplots
 import torch
 
 from engine import (
-    discover_cases,
-    load_training_snapshots,
-    fit_pod,
-    pod_project,
-    PODFCDNNTrainer,
-    predict_and_reconstruct,
-    compute_errors,
-    load_snapshot_uvp,
+    load_checkpoint,
+    predict_and_reconstruct
 )
-
 
 # ============================================================================
 # Page Configuration
@@ -97,7 +90,9 @@ else:
 # ------------------------------------------------------------
 # LOAD CHECKPOINT ONCE
 # ------------------------------------------------------------
+from pathlib import Path
 
+BASE_DIR = Path(__file__).resolve().parent
 @st.cache_resource
 def get_model(case_name):
 
