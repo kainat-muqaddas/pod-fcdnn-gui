@@ -93,17 +93,25 @@ else:
 @st.cache_resource
 def get_model(case_name):
 
-    from pathlib import Path
+    checkpoint_paths = {
 
-    path = Path(
-        r"D:\project\pod-fcdnn-gui-main\checkpoints\cavity_checkpoint.pt"
+        "Cavity":
+        "checkpoints/cavity_checkpoint.pt",
+
+        "Cylinder":
+        "checkpoints/cylinder_checkpoint.pt",
+
+        "Backward Facing Step":
+        "checkpoints/bfs_checkpoint.pt",
+
+        "NACA0012":
+        "checkpoints/naca_checkpoint.pt"
+    }
+
+    return load_checkpoint(
+        checkpoint_paths[case_name]
     )
-
-    st.write("Exists:", path.exists())
-    st.write("Loading:", path)
-
-    return load_checkpoint(path)
-  
+   
 # ------------------------------------------------------------
 # PREDICT BUTTON
 # ------------------------------------------------------------
