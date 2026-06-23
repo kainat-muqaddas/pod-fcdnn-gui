@@ -93,22 +93,20 @@ else:
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
-@st.cache_resource
-def get_model(case_name):
 
-    checkpoint_paths = {
+checkpoint_paths = {
 
         "Cavity":
-        BASE_DIR /"cavity_checkpoint.pt",
-
+         BASE_DIR / "cavity_checkpoint.pt"
+    
         "Cylinder":
-        "cylinderflow_checkpoint.pt",
+        BASE_DIR / "cylinderflow_checkpoint.pt",
 
         "Backward Facing Step":
-        "bfs_checkpoint.pt",
+        BASE_DIR / "bfs_checkpoint.pt",
 
         "NACA0012": 
-        "naca_checkpoint.pt"
+        BASE_DIR / "naca_checkpoint.pt"
     }
 
     return load_checkpoint(
