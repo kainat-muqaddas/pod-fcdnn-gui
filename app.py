@@ -99,14 +99,6 @@ checkpoint_paths = {
         "Cavity":
          BASE_DIR / "cavity_checkpoint.pt"
     
-        "Cylinder":
-        BASE_DIR / "cylinderflow_checkpoint.pt",
-
-        "Backward Facing Step":
-        BASE_DIR / "bfs_checkpoint.pt",
-
-        "NACA0012": 
-        BASE_DIR / "naca_checkpoint.pt"
     }
 
     return load_checkpoint(
