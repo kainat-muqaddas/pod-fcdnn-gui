@@ -108,10 +108,7 @@ def get_model(case_name):
         "NACA0012":
         "checkpoints/naca_checkpoint.pt"
     }
-path = checkpoint_paths[case_name]
 
-st.write("Loading:", path)
-st.write("Exists:", path.exists())
     return load_checkpoint(
         checkpoint_paths[case_name]
     )
