@@ -91,26 +91,28 @@ else:
 # LOAD CHECKPOINT ONCE
 # ------------------------------------------------------------
 
-from pathlib import Path
+@st.cache_resource
+def get_model(case_name):
 
-BASE_DIR = Path(__file__).resolve().parent
-
-checkpoint_paths = {
+    checkpoint_paths = {
 
         "Cavity":
-         BASE_DIR / "cavity_checkpoint.pt"
-        "BFS"
-         BASE_DIR / "BFS_checkpoint.pt"
-        "cylinder"
-         BASE_DIR / "cylinderflow_checkpoint.pt"
-        "NACA-0012"
-         BASE_DIR / "NACA_checkpoint.pt"
-    
+        "checkpoints/cavity_checkpoint.pt",
+
+        "Cylinder":
+        "checkpoints/cylinder_checkpoint.pt",
+
+        "Backward Facing Step":
+        "checkpoints/bfs_checkpoint.pt",
+
+        "NACA0012":
+        "checkpoints/naca_checkpoint.pt"
     }
 
     return load_checkpoint(
         checkpoint_paths[case_name]
     )
+
 # ------------------------------------------------------------
 # PREDICT BUTTON
 # ------------------------------------------------------------
