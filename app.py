@@ -90,29 +90,20 @@ else:
 # ------------------------------------------------------------
 # LOAD CHECKPOINT ONCE
 # ------------------------------------------------------------
-
 @st.cache_resource
 def get_model(case_name):
 
-    checkpoint_paths = {
+    from pathlib import Path
 
-        "Cavity":
-        "checkpoints/cavity_checkpoint.pt",
-
-        "Cylinder":
-        "checkpoints/cylinderflow_checkpoint.pt",
-
-        "Backward Facing Step":
-        "checkpoints/BFS_checkpoint.pt",
-
-        "NACA0012":
-        "checkpoints/naca_checkpoint.pt"
-    }
-
-    return load_checkpoint(
-        checkpoint_paths[case_name]
+    path = Path(
+        r"D:\project\pod-fcdnn-gui-main\checkpoints\cavity_checkpoint.pt"
     )
 
+    st.write("Exists:", path.exists())
+    st.write("Loading:", path)
+
+    return load_checkpoint(path)
+  
 # ------------------------------------------------------------
 # PREDICT BUTTON
 # ------------------------------------------------------------
