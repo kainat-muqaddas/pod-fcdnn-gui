@@ -98,6 +98,12 @@ checkpoint_paths = {
 
         "Cavity":
          BASE_DIR / "cavity_checkpoint.pt"
+        "BFS"
+         BASE_DIR / "BFS_checkpoint.pt"
+        "cylinder"
+         BASE_DIR / "cylinderflow_checkpoint.pt"
+        "NACA-0012"
+         BASE_DIR / "NACA_checkpoint.pt"
     
     }
 
