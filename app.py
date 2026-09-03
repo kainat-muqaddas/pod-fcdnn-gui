@@ -1,15 +1,32 @@
 """
-POD-FCDNN Streamlit Web Application (High-Performance Edition)
+POD-FCDNN Streamlit Web Application
+
+Interactive dashboard for POD-based surrogate modeling of fluid dynamics.
+Allows users to:
+1. Configure dataset and hyperparameters
+2. Train POD + Neural Network
+3. Make predictions and compare with reference data
 """
 
 import streamlit as st
+from pathlib import Path
+from typing import Optional, Dict, Any
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 import plotly.graph_objects as go
-from engine import load_checkpoint, predict_and_reconstruct
+from plotly.subplots import make_subplots
+import torch
 
-# ------------------------------------------------------------
+from engine import (
+    load_checkpoint,
+    predict_and_reconstruct
+)
+
+# ============================================================================
 # Page Configuration
-# ------------------------------------------------------------
+# ============================================================================
+
 st.set_page_config(
     page_title="POD-FCDNN Surrogate Model",
     page_icon="🌊",
@@ -18,123 +35,226 @@ st.set_page_config(
 )
 
 st.title("🌊 POD-FCDNN Fluid Dynamics Surrogate Model")
-st.markdown("Train and deploy a neural network surrogate model for rapid CFD prediction.")
-
-# ------------------------------------------------------------
-# Cached Model Loader
-# ------------------------------------------------------------
-@st.cache_resource(show_spinner="Loading checkpoint...")
-def get_cached_model(case_name: str):
-    checkpoint_paths = {
-        "Cavity": "checkpoints/cavity_checkpoint.pt",
-        "Cylinder": "checkpoints/cylinder_checkpoint.pt",
-        "Backward Facing Step": "checkpoints/bfs_checkpoint.pt",
-        "NACA0012": "checkpoints/naca_checkpoint.pt"
-    }
-    return load_checkpoint(checkpoint_paths[case_name])
-
-# ------------------------------------------------------------
-# High-Performance Visualization Helper
-# ------------------------------------------------------------
-def create_fast_field_plot(x, y, values, title, colorscale="Viridis", max_display_nodes=30000):
+st.markdown(
     """
-    Renders high-density spatial point data efficiently using WebGL and decimation.
+    Train and deploy a neural network surrogate model for rapid CFD prediction.
+    Combines Proper Orthogonal Decomposition with Deep Learning.
     """
-    n_nodes = len(x)
-    
-    # Subsample spatial points if grid density exceeds threshold
-    if n_nodes > max_display_nodes:
-        idx = np.random.choice(n_nodes, size=max_display_nodes, replace=False)
-        x_plot, y_plot, values_plot = x[idx], y[idx], values[idx]
-    else:
-        x_plot, y_plot, values_plot = x, y, values
+)
+# ============================================================
+# INFERENCE ONLY APPLICATION
+# ============================================================
 
-    fig = go.Figure()
-    
-    # Use Scattergl (WebGL) instead of standard Scatter (SVG)
-    fig.add_trace(
-        go.Scattergl(
-            x=x_plot,
-            y=y_plot,
-            mode="markers",
-            marker=dict(
-                size=3,
-                color=values_plot,
-                colorscale=colorscale,
-                showscale=True,
-                colorbar=dict(thickness=15, len=0.8)
-            )
-        )
-    )
-    
-    fig.update_layout(
-        title=title,
-        xaxis=dict(title="x", constrain="domain"),
-        yaxis=dict(title="y", scaleanchor="x", scaleratio=1),
-        height=550,
-        margin=dict(l=20, r=20, t=40, b=20)
-    )
-    return fig
+from engine import (
+    load_checkpoint,
+    predict_and_reconstruct
+)
 
-# ------------------------------------------------------------
-# Inputs & Case Selection
-# ------------------------------------------------------------
 st.header("Flow Field Prediction")
+# ------------------------------------------------------------
+# CASE SELECTION
+# ------------------------------------------------------------
 
 case = st.selectbox(
     "Select Case",
-    ["Cavity", "Cylinder", "Backward Facing Step", "NACA0012"]
+    [
+        "Cavity",
+        "Cylinder",
+        "Backward Facing Step",
+        "NACA0012"
+    ]
 )
+# ------------------------------------------------------------
+# PARAMETER INPUT
+# ------------------------------------------------------------
 
 if case == "NACA0012":
-    param = st.slider("Angle of Attack (α)", -5.0, 15.0, 0.0, 0.5)
+
+    param = st.slider(
+        "Angle of Attack (α)",
+        min_value=-5.0,
+        max_value=15.0,
+        value=0.0,
+        step=0.5
+    )
+
 else:
-    param = st.slider("Reynolds Number", 100, 10000, 1000, 100)
 
-predict_btn = st.button("Predict Flow Field", use_container_width=True)
+    param = st.slider(
+        "Reynolds Number",
+        min_value=100,
+        max_value=10000,
+        value=1000,
+        step=100
+    )
+# ------------------------------------------------------------
+# LOAD CHECKPOINT ONCE
+# ------------------------------------------------------------
+@st.cache_resource
+def get_model(case_name):
 
+    checkpoint_paths = {
+
+        "Cavity":
+        "checkpoints/cavity_checkpoint.pt",
+
+        "Cylinder":
+        "checkpoints/cylinder_checkpoint.pt",
+
+        "Backward Facing Step":
+        "checkpoints/bfs_checkpoint.pt",
+
+        "NACA0012":
+        "checkpoints/naca_checkpoint.pt"
+    }
+
+    return load_checkpoint(
+        checkpoint_paths[case_name]
+    )
+   
 # ------------------------------------------------------------
-# Inference Run & State Cache
+# PREDICT BUTTON
 # ------------------------------------------------------------
+
+predict_btn = st.button(
+    "Predict Flow Field",
+    use_container_width=True
+)
+# ------------------------------------------------------------
+# PREDICTION
+# ------------------------------------------------------------
+
 if predict_btn:
+
     try:
-        with st.spinner("Running POD-FCDNN inference..."):
-            trainer = get_cached_model(case)
-            res = predict_and_reconstruct(trainer, param)
-            
-            # Cache results in session state to prevent lost computations on render
-            st.session_state["cached_prediction"] = res
-            st.session_state["cached_case"] = case
-            st.session_state["cached_param"] = param
+
+        trainer = get_model(case)
+
+        result = predict_and_reconstruct(
+            trainer,
+            param
+        )
+
+        u = result["u"]
+        v = result["v"]
+        p = result["p"]
+
+        xy = result["xy"]
+
+        x_coords = xy[:, 0]
+        y_coords = xy[:, 1]
+
+        st.success(
+            f"Prediction completed for {case}"
+        )
+# ====================================================
+# PRESSURE FIELD
+# ====================================================
+
+        st.subheader("Pressure Field")
+
+        fig_p = go.Figure()
+
+        fig_p.add_trace(
+            go.Scatter(
+                x=x_coords,
+                y=y_coords,
+                mode="markers",
+                marker=dict(
+                    size=4,
+                    color=p,
+                    colorscale="Viridis",
+                    showscale=True
+                )
+            )
+        )
+
+        fig_p.update_layout(
+            title=f"{case} Pressure Field",
+            xaxis_title="x",
+            yaxis_title="y",
+            height=600
+        )
+
+        st.plotly_chart(
+            fig_p,
+            use_container_width=True
+        )
+ # ====================================================
+        # U VELOCITY
+        # ====================================================
+
+        st.subheader("U Velocity")
+
+        fig_u = go.Figure()
+
+        fig_u.add_trace(
+            go.Scatter(
+                x=x_coords,
+                y=y_coords,
+                mode="markers",
+                marker=dict(
+                    size=4,
+                    color=u,
+                    colorscale="RdBu_r",
+                    showscale=True
+                )
+            )
+        )
+
+        fig_u.update_layout(
+            title=f"{case} U Velocity",
+            xaxis_title="x",
+            yaxis_title="y",
+            height=600
+        )
+
+        st.plotly_chart(
+            fig_u,
+            use_container_width=True
+        )
+        # ====================================================
+        # V VELOCITY
+        # ====================================================
+
+        st.subheader("V Velocity")
+
+        fig_v = go.Figure()
+
+        fig_v.add_trace(
+            go.Scatter(
+                x=x_coords,
+                y=y_coords,
+                mode="markers",
+                marker=dict(
+                    size=4,
+                    color=v,
+                    colorscale="RdBu_r",
+                    showscale=True
+                )
+            )
+        )
+
+        fig_v.update_layout(
+            title=f"{case} V Velocity",
+            xaxis_title="x",
+            yaxis_title="y",
+            height=600
+        )
+
+        st.plotly_chart(
+            fig_v,
+            use_container_width=True
+        )
 
     except Exception as e:
-        st.error(f"Prediction failed: {str(e)}")
 
-# ------------------------------------------------------------
-# Display Output
-# ------------------------------------------------------------
-if "cached_prediction" in st.session_state:
-    res = st.session_state["cached_prediction"]
-    
-    # Ensure cached prediction belongs to currently active case
-    if st.session_state.get("cached_case") == case:
-        u, v, p = res["u"], res["v"], res["p"]
-        xy = res["xy"]
-        x_coords, y_coords = xy[:, 0], xy[:, 1]
+        st.error(
+            f"Prediction failed: {str(e)}"
+        )
 
-        st.success(f"Displaying prediction for {case} (Param: {st.session_state.get('cached_param')})")
 
-        # Organize plots into tabs for better GPU memory management
-        tab_p, tab_u, tab_v = st.tabs(["Pressure Field", "U Velocity", "V Velocity"])
 
-        with tab_p:
-            fig_p = create_fast_field_plot(x_coords, y_coords, p, f"{case} Pressure Field", "Viridis")
-            st.plotly_chart(fig_p, use_container_width=True)
 
-        with tab_u:
-            fig_u = create_fast_field_plot(x_coords, y_coords, u, f"{case} U Velocity", "RdBu_r")
-            st.plotly_chart(fig_u, use_container_width=True)
+engine.py 
 
-        with tab_v:
-            fig_v = create_fast_field_plot(x_coords, y_coords, v, f"{case} V Velocity", "RdBu_r")
-            st.plotly_chart(fig_v, use_container_width=True)
